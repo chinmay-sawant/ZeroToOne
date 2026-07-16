@@ -1,8 +1,8 @@
 # Zero to One
 
-Language roadmaps for **college graduates** — from first program to production-ready systems.
+Language and design roadmaps for **college graduates** — from first program to production-ready systems.
 
-Each track uses one continuous domain: an **Employee Management** application. You start with a simple in-memory CLI and grow the same product into an expert-level system.
+Each track uses one continuous domain: an **Employee Management** application. Language tracks start with a simple in-memory CLI and grow the same product into an expert-level system. **System Design** and **Architectures** use the same product as the spine for scale and structure.
 
 This repo also ships a **minimal React checklist platform** under `frontend/` that:
 
@@ -18,6 +18,8 @@ This repo also ships a **minimal React checklist platform** under `frontend/` th
 | **Java** | Backend / enterprise-leaning grads | [`java/readme/java.md`](java/readme/java.md) |
 | **Python** | Backend / data-friendly grads | [`python/readme/python.md`](python/readme/python.md) |
 | **Golang** | Systems / cloud-native grads | [`golang/readme/golang.md`](golang/readme/golang.md) |
+| **System Design** | Grads preparing for design interviews & scale | [`system-design/readme/system-design.md`](system-design/readme/system-design.md) |
+| **Architectures** | Grads learning structure styles & evolution | [`architectures/readme/architectures.md`](architectures/readme/architectures.md) |
 
 ## Checklist app (`frontend/`)
 
@@ -26,14 +28,14 @@ This repo also ships a **minimal React checklist platform** under `frontend/` th
 - React + TypeScript (Vite)
 - Tailwind CSS + **shadcn/ui** (black & white, no gradients)
 - `react-markdown` for readme rendering
-- Progress: `localStorage` keys `zerotoone:checklist:v1`, `zerotoone:active-language`
+- Progress: `localStorage` keys `zerotoone:checklist:v1`, `zerotoone:active-language` (all tracks)
 
 ### Content loading
 
 | Environment | How readmes are loaded |
 |-------------|------------------------|
-| **Local** (`localhost` / `127.0.0.1`) | `frontend/public/content/{java,python,golang}.md` (copied from language folders) |
-| **GitHub Pages** | `https://raw.githubusercontent.com/chinmay-sawant/ZeroToOne/master/{lang}/readme/{lang}.md` |
+| **Local** (`localhost` / `127.0.0.1`) | `frontend/public/content/{track}.md` (copied from track folders) |
+| **GitHub Pages** | `https://raw.githubusercontent.com/chinmay-sawant/ZeroToOne/master/{track}/readme/{track}.md` |
 
 Production always reflects the **master** branch prompts without baking markdown into the JS bundle.
 
@@ -90,6 +92,8 @@ zerotoone/
 ├── java/readme/java.md
 ├── python/readme/python.md
 ├── golang/readme/golang.md
+├── system-design/readme/system-design.md
+├── architectures/readme/architectures.md
 └── frontend/                # all React app sources & npm config
     ├── package.json
     ├── vite.config.ts       # outDir: ../docs, base: /ZeroToOne/
@@ -111,7 +115,7 @@ Beginner  →  Intermediate  →  Advanced  →  Expert
 
 ## Status
 
-- [x] Draft prompts (Java, Python, Golang)
+- [x] Draft prompts (Java, Python, Golang, System Design, Architectures)
 - [x] Checklist web app (localStorage + local/GitHub content)
 - [x] Frontend isolated under `frontend/`; build → root `docs/`
 - [ ] Refine prompts after review

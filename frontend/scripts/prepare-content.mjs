@@ -10,6 +10,14 @@ const sources = [
   { lang: 'java', from: join(repoRoot, 'java', 'readme', 'java.md') },
   { lang: 'python', from: join(repoRoot, 'python', 'readme', 'python.md') },
   { lang: 'golang', from: join(repoRoot, 'golang', 'readme', 'golang.md') },
+  {
+    lang: 'system-design',
+    from: join(repoRoot, 'system-design', 'readme', 'system-design.md'),
+  },
+  {
+    lang: 'architectures',
+    from: join(repoRoot, 'architectures', 'readme', 'architectures.md'),
+  },
 ]
 
 if (existsSync(outDir)) {

@@ -1,4 +1,4 @@
-import type { LanguageId } from '@/lib/content'
+import { TRACK_IDS, isLanguageId, type LanguageId } from '@/lib/content'
 
 const STORAGE_KEY = 'zerotoone:checklist:v1'
 const ACTIVE_LANG_KEY = 'zerotoone:active-language'
@@ -24,28 +24,23 @@ export type HistoryEntry = {
 
 export const MAX_HISTORY = 40
 
+function emptyRecordForTracks<T>(value: T): Record<LanguageId, T> {
+  return Object.fromEntries(TRACK_IDS.map((id) => [id, value])) as Record<
+    LanguageId,
+    T
+  >
+}
+
 export function emptyChecklistState(): ChecklistState {
-  return {
-    java: {},
-    python: {},
-    golang: {},
-  }
+  return emptyRecordForTracks({})
 }
 
 export function emptyOpenLevels(): OpenLevelsState {
-  return {
-    java: null,
-    python: null,
-    golang: null,
-  }
+  return emptyRecordForTracks(null)
 }
 
 export function emptySelectedSkills(): SelectedSkillsState {
-  return {
-    java: null,
-    python: null,
-    golang: null,
-  }
+  return emptyRecordForTracks(null)
 }
 
 function canUseStorage(): boolean {
@@ -80,21 +75,26 @@ function writeJson(key: string, value: unknown): void {
 }
 
 export function cloneChecklistState(state: ChecklistState): ChecklistState {
-  return {
-    java: { ...state.java },
-    python: { ...state.python },
-    golang: { ...state.golang },
+  const next = emptyChecklistState()
+  for (const id of TRACK_IDS) {
+    next[id] = { ...(state[id] ?? {}) }
   }
+  return next
+}
+
+function mergeChecklistState(
+  parsed: Partial<ChecklistState> | null | undefined,
+): ChecklistState {
+  const next = emptyChecklistState()
+  if (!parsed) return next
+  for (const id of TRACK_IDS) {
+    next[id] = { ...(parsed[id] ?? {}) }
+  }
+  return next
 }
 
 export function loadChecklistState(): ChecklistState {
-  const parsed = readJson<Partial<ChecklistState>>(STORAGE_KEY)
-  if (!parsed) return emptyChecklistState()
-  return {
-    java: parsed.java ?? {},
-    python: parsed.python ?? {},
-    golang: parsed.golang ?? {},
-  }
+  return mergeChecklistState(readJson<Partial<ChecklistState>>(STORAGE_KEY))
 }
 
 export function saveChecklistState(state: ChecklistState): void {
@@ -104,7 +104,7 @@ export function saveChecklistState(state: ChecklistState): void {
 export function loadActiveLanguage(): LanguageId {
   if (!canUseStorage()) return 'java'
   const v = window.localStorage.getItem(ACTIVE_LANG_KEY)
-  if (v === 'java' || v === 'python' || v === 'golang') return v
+  if (isLanguageId(v)) return v
   return 'java'
 }
 
@@ -119,12 +119,12 @@ export function saveActiveLanguage(lang: LanguageId): void {
 
 export function loadOpenLevels(): OpenLevelsState {
   const parsed = readJson<Partial<OpenLevelsState>>(OPEN_LEVELS_KEY)
-  if (!parsed) return emptyOpenLevels()
-  return {
-    java: parsed.java ?? null,
-    python: parsed.python ?? null,
-    golang: parsed.golang ?? null,
+  const next = emptyOpenLevels()
+  if (!parsed) return next
+  for (const id of TRACK_IDS) {
+    next[id] = parsed[id] ?? null
   }
+  return next
 }
 
 export function saveOpenLevels(levels: OpenLevelsState): void {
@@ -133,12 +133,12 @@ export function saveOpenLevels(levels: OpenLevelsState): void {
 
 export function loadSelectedSkills(): SelectedSkillsState {
   const parsed = readJson<Partial<SelectedSkillsState>>(SELECTED_SKILLS_KEY)
-  if (!parsed) return emptySelectedSkills()
-  return {
-    java: parsed.java ?? null,
-    python: parsed.python ?? null,
-    golang: parsed.golang ?? null,
+  const next = emptySelectedSkills()
+  if (!parsed) return next
+  for (const id of TRACK_IDS) {
+    next[id] = parsed[id] ?? null
   }
+  return next
 }
 
 export function saveSelectedSkills(skills: SelectedSkillsState): void {
@@ -181,11 +181,7 @@ export function loadHistory(): HistoryEntry[] {
         typeof e.at === 'number',
     )
     .map((e) => ({
-      state: {
-        java: e.state.java ?? {},
-        python: e.state.python ?? {},
-        golang: e.state.golang ?? {},
-      },
+      state: mergeChecklistState(e.state),
       label: e.label,
       at: e.at,
     }))

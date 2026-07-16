@@ -1,4 +1,27 @@
-export type LanguageId = 'java' | 'python' | 'golang'
+export type LanguageId =
+  | 'java'
+  | 'python'
+  | 'golang'
+  | 'system-design'
+  | 'architectures'
+
+export const TRACK_IDS: LanguageId[] = [
+  'java',
+  'python',
+  'golang',
+  'system-design',
+  'architectures',
+]
+
+export function isLanguageId(value: string | null | undefined): value is LanguageId {
+  return (
+    value === 'java' ||
+    value === 'python' ||
+    value === 'golang' ||
+    value === 'system-design' ||
+    value === 'architectures'
+  )
+}
 
 export const LANGUAGES: {
   id: LanguageId
@@ -23,6 +46,20 @@ export const LANGUAGES: {
     label: 'Golang',
     short: 'Cloud-native',
     description: 'Idiomatic Go from CLI to observable services.',
+  },
+  {
+    id: 'system-design',
+    label: 'System Design',
+    short: 'Scale & tradeoffs',
+    description:
+      'Design Employee Management at scale: capacity, APIs, data, and reliability.',
+  },
+  {
+    id: 'architectures',
+    label: 'Architectures',
+    short: 'Structure & styles',
+    description:
+      'Choose and evolve app architecture: modular monolith to event-driven platforms.',
   },
 ]
 

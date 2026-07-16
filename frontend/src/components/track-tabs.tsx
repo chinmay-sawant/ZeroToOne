@@ -11,8 +11,8 @@ export function TrackTabs({ active, onChange, progress }: TrackTabsProps) {
   return (
     <div
       role="tablist"
-      aria-label="Language tracks"
-      className="grid w-full grid-cols-3 gap-1.5 rounded-xl border border-border bg-muted/40 p-1.5 sm:gap-2 sm:p-2"
+      aria-label="Learning tracks"
+      className="grid w-full grid-cols-2 gap-1.5 rounded-xl border border-border bg-muted/40 p-1.5 sm:grid-cols-3 sm:gap-2 sm:p-2 lg:grid-cols-5"
     >
       {LANGUAGES.map((lang) => {
         const isActive = lang.id === active
@@ -25,16 +25,16 @@ export function TrackTabs({ active, onChange, progress }: TrackTabsProps) {
             aria-selected={isActive}
             onClick={() => onChange(lang.id)}
             className={cn(
-              'inline-flex min-h-11 w-full items-center justify-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:min-h-12 sm:gap-3 sm:px-4 sm:py-3 sm:text-[15px]',
+              'inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-medium transition-colors sm:min-h-12 sm:gap-2 sm:px-3 sm:py-3 sm:text-sm',
               isActive
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-background hover:text-foreground',
             )}
           >
-            <span className="tracking-tight">{lang.label}</span>
+            <span className="truncate tracking-tight">{lang.label}</span>
             <span
               className={cn(
-                'rounded-md px-1.5 py-0.5 font-mono text-[11px] tabular-nums sm:text-xs',
+                'shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] tabular-nums sm:text-[11px]',
                 isActive
                   ? 'bg-primary-foreground/15 text-primary-foreground/85'
                   : 'bg-background/60 text-muted-foreground',

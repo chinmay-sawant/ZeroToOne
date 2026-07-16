@@ -168,14 +168,10 @@ export function useChecklist() {
     (lang: LanguageId, itemId: string) => {
       setState((prev) => {
         const current = Boolean(prev[lang]?.[itemId])
-        const next: ChecklistState = {
-          java: { ...prev.java },
-          python: { ...prev.python },
-          golang: { ...prev.golang },
-          [lang]: {
-            ...prev[lang],
-            [itemId]: !current,
-          },
+        const next = cloneChecklistState(prev)
+        next[lang] = {
+          ...prev[lang],
+          [itemId]: !current,
         }
         // History after computing next — avoid side effects mid-updater when possible
         setHistory((h) =>
@@ -198,14 +194,10 @@ export function useChecklist() {
   const markComplete = useCallback((lang: LanguageId, itemId: string) => {
     setState((prev) => {
       if (prev[lang]?.[itemId] === true) return prev
-      const next: ChecklistState = {
-        java: { ...prev.java },
-        python: { ...prev.python },
-        golang: { ...prev.golang },
-        [lang]: {
-          ...prev[lang],
-          [itemId]: true,
-        },
+      const next = cloneChecklistState(prev)
+      next[lang] = {
+        ...prev[lang],
+        [itemId]: true,
       }
       setHistory((h) =>
         [
@@ -246,11 +238,9 @@ export function useChecklist() {
           )
         }
 
-        return {
-          java: lang === 'java' ? langMap : { ...prev.java },
-          python: lang === 'python' ? langMap : { ...prev.python },
-          golang: lang === 'golang' ? langMap : { ...prev.golang },
-        }
+        const next = cloneChecklistState(prev)
+        next[lang] = langMap
+        return next
       })
 
       setSelectedSkills((prev) => ({
