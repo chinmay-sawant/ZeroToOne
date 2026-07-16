@@ -1,21 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { CHECKLISTS, countChecked, countItems } from '@/data/checklists'
+import {
+  CHECKLISTS,
+  countChecked,
+  countItems,
+  findItem,
+} from '@/data/checklists'
 import type { LanguageId } from '@/lib/content'
 import {
   cloneChecklistState,
   emptyChecklistState,
+  emptySelectedSkills,
   loadActiveLanguage,
   loadChecklistState,
   loadHistory,
   loadOpenLevels,
+  loadSelectedSkills,
   saveActiveLanguage,
   saveChecklistState,
   saveHistory,
   saveOpenLevels,
+  saveSelectedSkills,
   type ChecklistState,
   type HistoryEntry,
   type OpenLevelsState,
+  type SelectedSkillsState,
   MAX_HISTORY,
 } from '@/lib/storage'
 
@@ -45,6 +54,9 @@ export function useChecklist() {
   const [openLevels, setOpenLevels] = useState<OpenLevelsState>(() =>
     loadOpenLevels(),
   )
+  const [selectedSkills, setSelectedSkills] = useState<SelectedSkillsState>(
+    () => loadSelectedSkills(),
+  )
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
   const [hydrated, setHydrated] = useState(false)
 
@@ -52,21 +64,31 @@ export function useChecklist() {
     const loadedState = loadChecklistState()
     const loadedLang = loadActiveLanguage()
     const loadedOpen = loadOpenLevels()
+    const loadedSelected = loadSelectedSkills()
     const loadedHistory = loadHistory()
 
-    // Ensure each track has a sensible open level if none stored
     const nextOpen: OpenLevelsState = { ...loadedOpen }
+    const nextSelected: SelectedSkillsState = { ...emptySelectedSkills(), ...loadedSelected }
+
     for (const lang of Object.keys(CHECKLISTS) as LanguageId[]) {
       nextOpen[lang] = defaultOpenForLanguage(
         lang,
         loadedState,
         loadedOpen[lang],
       )
+      // Drop stale skill ids if checklist structure changed
+      if (
+        nextSelected[lang] &&
+        !findItem(CHECKLISTS[lang], nextSelected[lang])
+      ) {
+        nextSelected[lang] = null
+      }
     }
 
     setState(loadedState)
     setLanguageState(loadedLang)
     setOpenLevels(nextOpen)
+    setSelectedSkills(nextSelected)
     setHistory(loadedHistory)
     setHydrated(true)
   }, [])
@@ -85,6 +107,11 @@ export function useChecklist() {
     if (!hydrated) return
     saveOpenLevels(openLevels)
   }, [openLevels, hydrated])
+
+  useEffect(() => {
+    if (!hydrated) return
+    saveSelectedSkills(selectedSkills)
+  }, [selectedSkills, hydrated])
 
   useEffect(() => {
     if (!hydrated) return
@@ -113,24 +140,133 @@ export function useChecklist() {
     }))
   }, [])
 
+  const selectSkill = useCallback((lang: LanguageId, itemId: string | null) => {
+    setSelectedSkills((prev) => ({
+      ...prev,
+      [lang]: itemId,
+    }))
+    // Opening a skill also expands its level when known
+    if (itemId) {
+      const found = findItem(CHECKLISTS[lang], itemId)
+      if (found) {
+        setOpenLevels((prev) => ({
+          ...prev,
+          [lang]: found.section.id,
+        }))
+      }
+    }
+  }, [])
+
+  const clearSelectedSkill = useCallback((lang: LanguageId) => {
+    setSelectedSkills((prev) => ({
+      ...prev,
+      [lang]: null,
+    }))
+  }, [])
+
   const toggle = useCallback(
     (lang: LanguageId, itemId: string) => {
       setState((prev) => {
-        const current = Boolean(prev[lang][itemId])
-        pushHistory(
-          prev,
-          current ? 'Unchecked a skill' : 'Checked a skill',
-        )
-        return {
-          ...prev,
+        const current = Boolean(prev[lang]?.[itemId])
+        const next: ChecklistState = {
+          java: { ...prev.java },
+          python: { ...prev.python },
+          golang: { ...prev.golang },
           [lang]: {
             ...prev[lang],
             [itemId]: !current,
           },
         }
+        // History after computing next — avoid side effects mid-updater when possible
+        setHistory((h) =>
+          [
+            {
+              state: cloneChecklistState(prev),
+              label: current ? 'Unchecked a skill' : 'Checked a skill',
+              at: Date.now(),
+            },
+            ...h,
+          ].slice(0, MAX_HISTORY),
+        )
+        return next
       })
     },
-    [pushHistory],
+    [],
+  )
+
+  /** Mark complete only if not already checked (used by Next navigation). */
+  const markComplete = useCallback((lang: LanguageId, itemId: string) => {
+    setState((prev) => {
+      if (prev[lang]?.[itemId] === true) return prev
+      const next: ChecklistState = {
+        java: { ...prev.java },
+        python: { ...prev.python },
+        golang: { ...prev.golang },
+        [lang]: {
+          ...prev[lang],
+          [itemId]: true,
+        },
+      }
+      setHistory((h) =>
+        [
+          {
+            state: cloneChecklistState(prev),
+            label: 'Checked a skill',
+            at: Date.now(),
+          },
+          ...h,
+        ].slice(0, MAX_HISTORY),
+      )
+      return next
+    })
+  }, [])
+
+  /**
+   * Mark current skill complete, then select the next skill.
+   * Single entry point for the Next button so both updates always run.
+   */
+  const completeAndSelectNext = useCallback(
+    (lang: LanguageId, currentItemId: string, nextItemId: string) => {
+      // Use functional update and always produce a new map reference so UI re-renders.
+      setState((prev) => {
+        const langMap = { ...(prev[lang] ?? {}) }
+        const wasDone = langMap[currentItemId] === true
+        langMap[currentItemId] = true
+
+        if (!wasDone) {
+          setHistory((h) =>
+            [
+              {
+                state: cloneChecklistState(prev),
+                label: 'Checked a skill',
+                at: Date.now(),
+              },
+              ...h,
+            ].slice(0, MAX_HISTORY),
+          )
+        }
+
+        return {
+          java: lang === 'java' ? langMap : { ...prev.java },
+          python: lang === 'python' ? langMap : { ...prev.python },
+          golang: lang === 'golang' ? langMap : { ...prev.golang },
+        }
+      })
+
+      setSelectedSkills((prev) => ({
+        ...prev,
+        [lang]: nextItemId,
+      }))
+
+      const found = findItem(CHECKLISTS[lang], nextItemId)
+      if (found) {
+        setOpenLevels((prev) => ({
+          ...prev,
+          [lang]: found.section.id,
+        }))
+      }
+    },
+    [],
   )
 
   const resetLanguage = useCallback(
@@ -162,7 +298,6 @@ export function useChecklist() {
     })
   }, [])
 
-  /** Restore the oldest snapshot in history and clear the stack. */
   const undoAll = useCallback(() => {
     setHistory((h) => {
       if (h.length === 0) return h
@@ -175,6 +310,11 @@ export function useChecklist() {
   const sections = CHECKLISTS[language]
   const checkedMap = state[language]
   const openLevelId = openLevels[language]
+  const selectedSkillId = selectedSkills[language]
+  const selected = useMemo(
+    () => findItem(sections, selectedSkillId),
+    [sections, selectedSkillId],
+  )
 
   const progress = useMemo(() => {
     const total = countItems(sections)
@@ -208,7 +348,13 @@ export function useChecklist() {
     checkedMap,
     openLevelId,
     setOpenLevel,
+    selectedSkillId,
+    selected,
+    selectSkill,
+    clearSelectedSkill,
     toggle,
+    markComplete,
+    completeAndSelectNext,
     resetLanguage,
     resetAll,
     undo,

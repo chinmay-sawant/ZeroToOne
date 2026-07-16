@@ -2,7 +2,6 @@ import { Check, ChevronDown } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Progress } from '@/components/ui/progress'
 import type { ChecklistSection } from '@/data/checklists'
 import type { LanguageId } from '@/lib/content'
 import { cn } from '@/lib/utils'
@@ -12,8 +11,11 @@ type LevelPathProps = {
   sections: ChecklistSection[]
   checkedMap: Record<string, boolean>
   openLevelId: string | null
+  selectedSkillId: string | null
   onOpenLevelChange: (lang: LanguageId, levelId: string | null) => void
+  onSelectSkill: (lang: LanguageId, itemId: string) => void
   onToggle: (lang: LanguageId, itemId: string) => void
+  compact?: boolean
 }
 
 function sectionStats(
@@ -22,9 +24,8 @@ function sectionStats(
 ) {
   const total = section.items.length
   const done = section.items.filter((i) => checkedMap[i.id]).length
-  const percent = total === 0 ? 0 : Math.round((done / total) * 100)
   const complete = total > 0 && done === total
-  return { total, done, percent, complete }
+  return { total, done, complete }
 }
 
 export function LevelPath({
@@ -32,26 +33,40 @@ export function LevelPath({
   sections,
   checkedMap,
   openLevelId,
+  selectedSkillId,
   onOpenLevelChange,
+  onSelectSkill,
   onToggle,
+  compact = false,
 }: LevelPathProps) {
   return (
     <ol className="relative space-y-0">
       {sections.map((section, index) => {
-        const { total, done, percent, complete } = sectionStats(
-          section,
-          checkedMap,
-        )
+        const { total, done, complete } = sectionStats(section, checkedMap)
         const isOpen = openLevelId === section.id
         const isLast = index === sections.length - 1
         const step = index + 1
 
         return (
-          <li key={section.id} className="relative flex gap-4 pb-6 last:pb-0 sm:gap-5">
-            <div className="flex w-8 shrink-0 flex-col items-center sm:w-9">
+          <li
+            key={section.id}
+            className={cn(
+              'relative flex last:pb-0',
+              compact ? 'gap-2 pb-2.5' : 'gap-3 pb-4 sm:gap-4',
+            )}
+          >
+            <div
+              className={cn(
+                'flex shrink-0 flex-col items-center',
+                compact ? 'w-5' : 'w-7 sm:w-8',
+              )}
+            >
               <div
                 className={cn(
-                  'relative z-10 flex size-8 items-center justify-center rounded-full border text-xs font-semibold sm:size-9 sm:text-sm',
+                  'relative z-10 flex items-center justify-center rounded-full border font-semibold',
+                  compact
+                    ? 'size-5 text-[10px]'
+                    : 'size-7 text-[11px] sm:size-8 sm:text-xs',
                   complete
                     ? 'border-primary bg-primary text-primary-foreground'
                     : isOpen
@@ -60,7 +75,10 @@ export function LevelPath({
                 )}
               >
                 {complete ? (
-                  <Check className="size-3.5" strokeWidth={3} />
+                  <Check
+                    className={compact ? 'size-2.5' : 'size-3'}
+                    strokeWidth={3}
+                  />
                 ) : (
                   step
                 )}
@@ -68,7 +86,8 @@ export function LevelPath({
               {!isLast && (
                 <div
                   className={cn(
-                    'mt-1 w-px min-h-6 flex-1',
+                    'mt-0.5 w-px flex-1',
+                    compact ? 'min-h-3' : 'min-h-5',
                     complete ? 'bg-primary/50' : 'bg-border',
                   )}
                   aria-hidden
@@ -78,7 +97,7 @@ export function LevelPath({
 
             <div
               className={cn(
-                'min-w-0 flex-1 rounded-lg border transition-colors',
+                'min-w-0 flex-1 rounded-md border transition-colors',
                 isOpen
                   ? 'border-primary/40 bg-card'
                   : 'border-border bg-card/40',
@@ -86,77 +105,97 @@ export function LevelPath({
             >
               <button
                 type="button"
-                className="flex w-full items-start gap-3 px-4 py-4 text-left sm:px-5"
+                className={cn(
+                  'flex w-full items-center gap-2 text-left',
+                  compact ? 'px-2 py-1.5' : 'px-3 py-2.5 sm:px-4',
+                )}
                 onClick={() =>
                   onOpenLevelChange(language, isOpen ? null : section.id)
                 }
                 aria-expanded={isOpen}
               >
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-semibold tracking-tight sm:text-lg">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <h2
+                      className={cn(
+                        'min-w-0 flex-1 truncate font-semibold tracking-tight',
+                        compact ? 'text-xs' : 'text-sm sm:text-base',
+                      )}
+                    >
                       {section.title}
                     </h2>
+                    <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                      {done}/{total}
+                    </span>
                     {complete && (
                       <Badge
                         variant="outline"
-                        className="text-[10px] uppercase"
+                        className="hidden h-5 px-1 text-[9px] uppercase sm:inline-flex"
                       >
                         Done
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Progress
-                      value={percent}
-                      className="h-1.5 max-w-xs sm:max-w-sm"
-                    />
-                    <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      {done}/{total}
-                    </span>
-                  </div>
                 </div>
                 <ChevronDown
                   className={cn(
-                    'mt-1 size-4 shrink-0 text-muted-foreground transition-transform',
+                    'size-3.5 shrink-0 text-muted-foreground transition-transform',
                     isOpen && 'rotate-180',
                   )}
                 />
               </button>
 
               {isOpen && (
-                <ul className="grid gap-2 border-t border-border px-4 py-4 sm:grid-cols-2 sm:px-5">
-                  {section.items.map((item) => {
-                    const checked = Boolean(checkedMap[item.id])
-                    const inputId = `check-${item.id}`
+                <ul
+                  className={cn(
+                    'space-y-1 border-t border-border',
+                    compact ? 'px-1.5 py-1.5' : 'px-2.5 py-2 sm:px-3',
+                  )}
+                >
+                  {section.items.map((entry) => {
+                    const checked = checkedMap[entry.id] === true
+                    const selected = selectedSkillId === entry.id
+                    const inputId = `check-${entry.id}`
                     return (
-                      <li key={item.id}>
-                        <label
-                          htmlFor={inputId}
+                      <li key={entry.id}>
+                        <div
                           className={cn(
-                            'flex h-full cursor-pointer items-start gap-3 rounded-md border px-3 py-2.5 transition-colors',
-                            checked
-                              ? 'border-border bg-muted/30'
-                              : 'border-border bg-background hover:bg-muted/40',
+                            'flex items-start gap-2 rounded-md border transition-colors',
+                            compact ? 'px-1.5 py-1.5' : 'px-2 py-2',
+                            selected
+                              ? 'border-primary bg-primary/5'
+                              : checked
+                                ? 'border-border bg-muted/30'
+                                : 'border-border bg-background hover:bg-muted/40',
                           )}
                         >
                           <Checkbox
+                            key={`${entry.id}-${checked ? '1' : '0'}`}
                             id={inputId}
                             checked={checked}
-                            onCheckedChange={() => onToggle(language, item.id)}
-                            className="mt-0.5"
+                            onCheckedChange={() => onToggle(language, entry.id)}
+                            className="mt-0.5 size-3.5"
+                            onClick={(e) => e.stopPropagation()}
                           />
-                          <span
-                            className={cn(
-                              'text-sm leading-snug',
-                              checked
-                                ? 'text-muted-foreground line-through'
-                                : 'text-foreground',
-                            )}
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 text-left"
+                            onClick={() => onSelectSkill(language, entry.id)}
                           >
-                            {item.label}
-                          </span>
-                        </label>
+                            <span
+                              className={cn(
+                                'leading-snug',
+                                compact ? 'text-xs' : 'text-sm',
+                                checked
+                                  ? 'text-muted-foreground line-through'
+                                  : 'text-foreground',
+                                selected && !checked && 'font-medium',
+                              )}
+                            >
+                              {entry.label}
+                            </span>
+                          </button>
+                        </div>
                       </li>
                     )
                   })}

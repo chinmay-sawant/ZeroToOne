@@ -6,12 +6,15 @@ const OPEN_LEVELS_KEY = 'zerotoone:open-levels:v1'
 const THEME_KEY = 'zerotoone:theme'
 const HISTORY_KEY = 'zerotoone:history:v1'
 const CURRICULUM_OPEN_KEY = 'zerotoone:curriculum-open'
+const SELECTED_SKILLS_KEY = 'zerotoone:selected-skills:v1'
 
 export type ThemeMode = 'dark' | 'light'
 
 export type ChecklistState = Record<LanguageId, Record<string, boolean>>
 
 export type OpenLevelsState = Record<LanguageId, string | null>
+
+export type SelectedSkillsState = Record<LanguageId, string | null>
 
 export type HistoryEntry = {
   state: ChecklistState
@@ -30,6 +33,14 @@ export function emptyChecklistState(): ChecklistState {
 }
 
 export function emptyOpenLevels(): OpenLevelsState {
+  return {
+    java: null,
+    python: null,
+    golang: null,
+  }
+}
+
+export function emptySelectedSkills(): SelectedSkillsState {
   return {
     java: null,
     python: null,
@@ -118,6 +129,20 @@ export function loadOpenLevels(): OpenLevelsState {
 
 export function saveOpenLevels(levels: OpenLevelsState): void {
   writeJson(OPEN_LEVELS_KEY, levels)
+}
+
+export function loadSelectedSkills(): SelectedSkillsState {
+  const parsed = readJson<Partial<SelectedSkillsState>>(SELECTED_SKILLS_KEY)
+  if (!parsed) return emptySelectedSkills()
+  return {
+    java: parsed.java ?? null,
+    python: parsed.python ?? null,
+    golang: parsed.golang ?? null,
+  }
+}
+
+export function saveSelectedSkills(skills: SelectedSkillsState): void {
+  writeJson(SELECTED_SKILLS_KEY, skills)
 }
 
 export function loadTheme(): ThemeMode {
