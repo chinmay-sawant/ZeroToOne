@@ -91,6 +91,14 @@
     color-scheme: dark;
   }
 
+  html.light {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   html,
   body {
     @apply bg-background text-foreground antialiased;

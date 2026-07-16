@@ -1,5 +1,4 @@
 import { Check, ChevronDown } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,6 +11,8 @@ type LevelPathProps = {
   language: LanguageId
   sections: ChecklistSection[]
   checkedMap: Record<string, boolean>
+  openLevelId: string | null
+  onOpenLevelChange: (lang: LanguageId, levelId: string | null) => void
   onToggle: (lang: LanguageId, itemId: string) => void
 }
 
@@ -30,22 +31,10 @@ export function LevelPath({
   language,
   sections,
   checkedMap,
+  openLevelId,
+  onOpenLevelChange,
   onToggle,
 }: LevelPathProps) {
-  const firstOpenId = useMemo(() => {
-    for (const section of sections) {
-      const { complete } = sectionStats(section, checkedMap)
-      if (!complete) return section.id
-    }
-    return sections[0]?.id ?? null
-  }, [sections, checkedMap])
-
-  const [openId, setOpenId] = useState<string | null>(firstOpenId)
-
-  useEffect(() => {
-    setOpenId(firstOpenId)
-  }, [language, firstOpenId])
-
   return (
     <ol className="relative space-y-0">
       {sections.map((section, index) => {
@@ -53,17 +42,16 @@ export function LevelPath({
           section,
           checkedMap,
         )
-        const isOpen = openId === section.id
+        const isOpen = openLevelId === section.id
         const isLast = index === sections.length - 1
         const step = index + 1
 
         return (
-          <li key={section.id} className="relative flex gap-4 pb-6 last:pb-0">
-            {/* Timeline rail */}
-            <div className="flex w-8 shrink-0 flex-col items-center">
+          <li key={section.id} className="relative flex gap-4 pb-6 last:pb-0 sm:gap-5">
+            <div className="flex w-8 shrink-0 flex-col items-center sm:w-9">
               <div
                 className={cn(
-                  'relative z-10 flex size-8 items-center justify-center rounded-full border text-xs font-semibold',
+                  'relative z-10 flex size-8 items-center justify-center rounded-full border text-xs font-semibold sm:size-9 sm:text-sm',
                   complete
                     ? 'border-primary bg-primary text-primary-foreground'
                     : isOpen
@@ -71,12 +59,16 @@ export function LevelPath({
                       : 'border-border bg-background text-muted-foreground',
                 )}
               >
-                {complete ? <Check className="size-3.5" strokeWidth={3} /> : step}
+                {complete ? (
+                  <Check className="size-3.5" strokeWidth={3} />
+                ) : (
+                  step
+                )}
               </div>
               {!isLast && (
                 <div
                   className={cn(
-                    'mt-1 w-px flex-1 min-h-6',
+                    'mt-1 w-px min-h-6 flex-1',
                     complete ? 'bg-primary/50' : 'bg-border',
                   )}
                   aria-hidden
@@ -84,32 +76,41 @@ export function LevelPath({
               )}
             </div>
 
-            {/* Level card */}
             <div
               className={cn(
                 'min-w-0 flex-1 rounded-lg border transition-colors',
-                isOpen ? 'border-primary/40 bg-card' : 'border-border bg-card/40',
+                isOpen
+                  ? 'border-primary/40 bg-card'
+                  : 'border-border bg-card/40',
               )}
             >
               <button
                 type="button"
-                className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
-                onClick={() => setOpenId(isOpen ? null : section.id)}
+                className="flex w-full items-start gap-3 px-4 py-4 text-left sm:px-5"
+                onClick={() =>
+                  onOpenLevelChange(language, isOpen ? null : section.id)
+                }
                 aria-expanded={isOpen}
               >
                 <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-semibold tracking-tight">
+                    <h2 className="text-base font-semibold tracking-tight sm:text-lg">
                       {section.title}
                     </h2>
                     {complete && (
-                      <Badge variant="outline" className="text-[10px] uppercase">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] uppercase"
+                      >
                         Done
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <Progress value={percent} className="h-1.5 max-w-[200px]" />
+                    <Progress
+                      value={percent}
+                      className="h-1.5 max-w-xs sm:max-w-sm"
+                    />
                     <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                       {done}/{total}
                     </span>
@@ -124,7 +125,7 @@ export function LevelPath({
               </button>
 
               {isOpen && (
-                <ul className="space-y-2 border-t border-border px-4 py-3.5">
+                <ul className="grid gap-2 border-t border-border px-4 py-4 sm:grid-cols-2 sm:px-5">
                   {section.items.map((item) => {
                     const checked = Boolean(checkedMap[item.id])
                     const inputId = `check-${item.id}`
@@ -133,7 +134,7 @@ export function LevelPath({
                         <label
                           htmlFor={inputId}
                           className={cn(
-                            'flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2.5 transition-colors',
+                            'flex h-full cursor-pointer items-start gap-3 rounded-md border px-3 py-2.5 transition-colors',
                             checked
                               ? 'border-border bg-muted/30'
                               : 'border-border bg-background hover:bg-muted/40',
