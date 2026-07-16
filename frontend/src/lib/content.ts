@@ -13,6 +13,13 @@ export const TRACK_IDS: LanguageId[] = [
   'architectures',
 ]
 
+/**
+ * The track selected by default on first load (and when no saved preference
+ * exists, or the saved preference points to a locked track).
+ * Must be an enabled (non-coming-soon) track.
+ */
+export const DEFAULT_LANGUAGE: LanguageId = 'python'
+
 export function isLanguageId(value: string | null | undefined): value is LanguageId {
   return (
     value === 'java' ||

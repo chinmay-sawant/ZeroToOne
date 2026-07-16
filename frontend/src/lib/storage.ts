@@ -1,4 +1,10 @@
-import { TRACK_IDS, isLanguageId, type LanguageId } from '@/lib/content'
+import {
+  DEFAULT_LANGUAGE,
+  TRACK_IDS,
+  isComingSoon,
+  isLanguageId,
+  type LanguageId,
+} from '@/lib/content'
 
 const STORAGE_KEY = 'zerotoone:checklist:v1'
 const ACTIVE_LANG_KEY = 'zerotoone:active-language'
@@ -102,10 +108,12 @@ export function saveChecklistState(state: ChecklistState): void {
 }
 
 export function loadActiveLanguage(): LanguageId {
-  if (!canUseStorage()) return 'java'
+  if (!canUseStorage()) return DEFAULT_LANGUAGE
   const v = window.localStorage.getItem(ACTIVE_LANG_KEY)
-  if (isLanguageId(v)) return v
-  return 'java'
+  // Ignore a saved value that points to a locked/coming-soon track so we never
+  // restore into a disabled tab on first load.
+  if (isLanguageId(v) && !isComingSoon(v)) return v
+  return DEFAULT_LANGUAGE
 }
 
 export function saveActiveLanguage(lang: LanguageId): void {
