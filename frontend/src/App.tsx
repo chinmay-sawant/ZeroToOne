@@ -242,10 +242,7 @@ export default function App() {
 
               {!detailOpen && (
                 <p className="text-sm text-muted-foreground">
-                  {meta.description}{' '}
-                  {language === 'system-design' || language === 'architectures'
-                    ? 'Same product spine as the language tracks: Employee Management, grown level by level.'
-                    : 'Same domain the whole way: an Employee app that grows from a CLI into a production-shaped system.'}
+                  {meta.description}
                 </p>
               )}
             </section>

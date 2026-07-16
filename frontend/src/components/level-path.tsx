@@ -46,6 +46,8 @@ export function LevelPath({
         const isOpen = openLevelId === section.id
         const isLast = index === sections.length - 1
         const step = index + 1
+        const isFlowDiagram = Boolean(section.flowDiagram)
+        const flowItem = section.items[0]
 
         return (
           <li
@@ -101,51 +103,90 @@ export function LevelPath({
                 isOpen
                   ? 'border-primary/40 bg-card'
                   : 'border-border bg-card/40',
+                isFlowDiagram && 'border-dashed',
               )}
             >
-              <button
-                type="button"
-                className={cn(
-                  'flex w-full items-center gap-2 text-left',
-                  compact ? 'px-2 py-1.5' : 'px-3 py-2.5 sm:px-4',
-                )}
-                onClick={() =>
-                  onOpenLevelChange(language, isOpen ? null : section.id)
-                }
-                aria-expanded={isOpen}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <h2
-                      className={cn(
-                        'min-w-0 flex-1 truncate font-semibold tracking-tight',
-                        compact ? 'text-xs' : 'text-sm sm:text-base',
-                      )}
-                    >
-                      {section.title}
-                    </h2>
-                    <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
-                      {done}/{total}
-                    </span>
-                    {complete && (
+              {isFlowDiagram && flowItem ? (
+                <button
+                  type="button"
+                  className={cn(
+                    'flex w-full items-center gap-2 text-left',
+                    compact ? 'px-2 py-1.5' : 'px-3 py-2.5 sm:px-4',
+                  )}
+                  onClick={() => onSelectSkill(language, flowItem.id)}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <h2
+                        className={cn(
+                          'min-w-0 flex-1 truncate font-semibold tracking-tight',
+                          compact ? 'text-xs' : 'text-sm sm:text-base',
+                        )}
+                      >
+                        {section.title}
+                      </h2>
                       <Badge
                         variant="outline"
                         className="hidden h-5 px-1 text-[9px] uppercase sm:inline-flex"
                       >
-                        Done
+                        Diagram
                       </Badge>
-                    )}
+                    </div>
+                    <p
+                      className={cn(
+                        'mt-0.5 truncate text-muted-foreground',
+                        compact ? 'text-[11px]' : 'text-xs',
+                      )}
+                    >
+                      {flowItem.label}
+                    </p>
                   </div>
-                </div>
-                <ChevronDown
+                </button>
+              ) : (
+                <button
+                  type="button"
                   className={cn(
-                    'size-3.5 shrink-0 text-muted-foreground transition-transform',
-                    isOpen && 'rotate-180',
+                    'flex w-full items-center gap-2 text-left',
+                    compact ? 'px-2 py-1.5' : 'px-3 py-2.5 sm:px-4',
                   )}
-                />
-              </button>
+                  onClick={() =>
+                    onOpenLevelChange(language, isOpen ? null : section.id)
+                  }
+                  aria-expanded={isOpen}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <h2
+                        className={cn(
+                          'min-w-0 flex-1 truncate font-semibold tracking-tight',
+                          compact ? 'text-xs' : 'text-sm sm:text-base',
+                        )}
+                      >
+                        {section.title}
+                      </h2>
+                      <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                        {done}/{total}
+                      </span>
+                      {complete && (
+                        <Badge
+                          variant="outline"
+                          className="hidden h-5 px-1 text-[9px] uppercase sm:inline-flex"
+                        >
+                          Done
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'size-3.5 shrink-0 text-muted-foreground transition-transform',
+                      isOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+              )}
 
-              {isOpen && (
+              {isOpen && !isFlowDiagram && (
                 <ul
                   className={cn(
                     'space-y-1 border-t border-border',

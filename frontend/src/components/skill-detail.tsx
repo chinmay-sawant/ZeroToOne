@@ -1,5 +1,8 @@
-import { Check, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Copy, X } from 'lucide-react'
+import { useState } from 'react'
 
+import { FlowDiagram } from '@/components/flow-diagram'
+import { MarkdownView } from '@/components/markdown-view'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -85,23 +88,51 @@ export function SkillDetail({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Lesson body
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-foreground">
-              {item.body}
-            </p>
-          </div>
+          {section.flowDiagram && <FlowDiagram />}
 
-          <div className="rounded-lg border border-dashed border-border px-4 py-4">
-            <p className="text-sm font-medium">Coming next</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Steps, code snippets, exercises, and links from the language
-              readme prompts will land in this panel. Header content above is
-              the editable brief for now.
-            </p>
-          </div>
+          {!section.flowDiagram && item.markdown && (
+            <MarkdownPrompt prompt={item.markdown} />
+          )}
+
+          {!section.flowDiagram && !item.markdown && (
+            <>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Lesson body
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground">
+                  {item.body}
+                </p>
+              </div>
+
+              {item.code && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Snippet
+                    {item.codeLang && (
+                      <span className="ml-2 font-mono text-[10px] lowercase text-muted-foreground/80">
+                        {item.codeLang}
+                      </span>
+                    )}
+                  </p>
+                  <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-muted/40 p-3 text-[12px] leading-relaxed">
+                    <code className="font-mono">{item.code}</code>
+                  </pre>
+                </div>
+              )}
+
+              {!item.code && (
+                <div className="rounded-lg border border-dashed border-border px-4 py-4">
+                  <p className="text-sm font-medium">Coming next</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Steps, code snippets, exercises, and links from the language
+                    readme prompts will land in this panel. Header content above is
+                    the editable brief for now.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -134,6 +165,53 @@ export function SkillDetail({
           </Button>
         </div>
       </footer>
+    </div>
+  )
+}
+
+/** Render a markdown prompt with a copy-to-clipboard helper. */
+function MarkdownPrompt({ prompt }: { prompt: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(prompt)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // clipboard unavailable — ignore
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Prompt
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={copy}
+          aria-label="Copy prompt to clipboard"
+        >
+          {copied ? (
+            <>
+              <Check className="size-3.5" strokeWidth={3} />
+              Copied
+            </>
+          ) : (
+            <>
+              <Copy className="size-3.5" />
+              Copy
+            </>
+          )}
+        </Button>
+      </div>
+      <div className="rounded-lg border border-border bg-card p-3 sm:p-4">
+        <MarkdownView content={prompt} />
+      </div>
     </div>
   )
 }

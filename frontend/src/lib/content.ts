@@ -28,24 +28,29 @@ export const LANGUAGES: {
   label: string
   short: string
   description: string
+  /** When true the track is locked: rendered in red, not clickable, shows "Coming soon" on hover. */
+  comingSoon?: boolean
 }[] = [
   {
     id: 'java',
     label: 'Java',
     short: 'JVM backends',
     description: 'Spring Boot path from CLI to production services.',
+    comingSoon: true,
   },
   {
     id: 'python',
     label: 'Python',
     short: 'APIs & tools',
-    description: 'FastAPI path from CLI to production workers.',
+    description:
+      'Python backend curriculum: from scripting basics to a Netflix-style FastAPI service.',
   },
   {
     id: 'golang',
     label: 'Golang',
     short: 'Cloud-native',
     description: 'Idiomatic Go from CLI to observable services.',
+    comingSoon: true,
   },
   {
     id: 'system-design',
@@ -53,6 +58,7 @@ export const LANGUAGES: {
     short: 'Scale & tradeoffs',
     description:
       'Design Employee Management at scale: capacity, APIs, data, and reliability.',
+    comingSoon: true,
   },
   {
     id: 'architectures',
@@ -60,8 +66,14 @@ export const LANGUAGES: {
     short: 'Structure & styles',
     description:
       'Choose and evolve app architecture: modular monolith to event-driven platforms.',
+    comingSoon: true,
   },
 ]
+
+/** True for tracks that are locked / not yet available. */
+export function isComingSoon(lang: LanguageId): boolean {
+  return Boolean(LANGUAGES.find((l) => l.id === lang)?.comingSoon)
+}
 
 export const GITHUB = {
   owner: 'chinmay-sawant',
